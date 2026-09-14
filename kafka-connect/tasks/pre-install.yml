@@ -1,0 +1,60 @@
+---
+- name: Check existing Kafka installation
+  ansible.builtin.command:
+    cmd: test -d "{{ kafka_connect_install_dir }}"
+  register: kafka_installation
+  changed_when: false
+  tags:
+    - pre-install
+
+- name: Verify existing Kafka installation
+  ansible.builtin.assert:
+    that:
+      - kafka_installation.rc == 0
+    fail_msg: "Kafka installation directory {{ kafka_connect_install_dir }} was not found on {{ inventory_hostname }}"
+    success_msg: "Existing Kafka installation found on {{ inventory_hostname }}"
+  tags:
+    - pre-install
+- name: Check Kafka Connect distributed startup script
+  ansible.builtin.stat:
+    path: /opt/kafka/bin/connect-distributed.sh
+  register: kafka_connect_binary
+
+- name: Verify Kafka Connect distributed startup script
+  ansible.builtin.assert:
+    that:
+      - kafka_connect_binary.stat.exists
+      - kafka_connect_binary.stat.executable
+    fail_msg: "Kafka Connect binary was not found in /opt/kafka/bin on {{ inventory_hostname }}"
+    success_msg: "Kafka Connect binary found on {{ inventory_hostname }}"
+
+- name: Create Kafka Connect system group
+  ansible.builtin.group:
+    name: "{{ kafka_connect_group }}"
+    system: true
+    state: present
+
+- name: Create Kafka Connect system user
+  ansible.builtin.user:
+    name: "{{ kafka_connect_user }}"
+    group: "{{ kafka_connect_group }}"
+    system: true
+    shell: /usr/sbin/nologin
+    create_home: false
+    state: present
+
+- name: Create Kafka Connect data directory
+  ansible.builtin.file:
+    path: "{{ kafka_connect_data_dir }}"
+    state: directory
+    owner: "{{ kafka_connect_user }}"
+    group: "{{ kafka_connect_group }}"
+    mode: "0755"
+
+- name: Create Kafka Connect plugin directory
+  ansible.builtin.file:
+    path: "{{ kafka_connect_plugin_path }}"
+    state: directory
+    owner: "{{ kafka_connect_user }}"
+    group: "{{ kafka_connect_group }}"
+    mode: "0755"

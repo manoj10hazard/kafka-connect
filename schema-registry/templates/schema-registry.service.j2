@@ -1,0 +1,23 @@
+[Unit]
+Description=Confluent Schema Registry
+Documentation=https://docs.confluent.io/platform/current/schema-registry/index.html
+After=network-online.target kafka.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+
+User={{ schema_registry_user }}
+Group={{ schema_registry_group }}
+
+Environment="SCHEMA_REGISTRY_HEAP_OPTS={{ schema_registry_heap_opts }}"
+
+ExecStart={{ schema_registry_install_dir }}/bin/schema-registry-start {{ schema_registry_config_dir }}/schema-registry.properties
+
+Restart=on-failure
+RestartSec=5
+
+LimitNOFILE=100000
+
+[Install]
+WantedBy=multi-user.target

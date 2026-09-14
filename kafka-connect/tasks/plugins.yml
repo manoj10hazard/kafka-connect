@@ -1,0 +1,94 @@
+---
+- name: Create Kafka Connect JDBC plugin directory
+  ansible.builtin.file:
+    path: "{{ kafka_connect_jdbc_plugin_dir }}"
+    state: directory
+    owner: "{{ kafka_connect_user }}"
+    group: "{{ kafka_connect_group }}"
+    mode: "0755"
+  tags:
+    - plugins
+
+- name: Check installed Kafka Connect JDBC plugin
+  ansible.builtin.stat:
+    path: "{{ kafka_connect_jdbc_plugin_dir }}/kafka-connect-jdbc-{{ kafka_connect_jdbc_version }}.jar"
+  register: kafka_connect_jdbc_installed
+  tags:
+    - plugins
+
+- name: Download Kafka Connect JDBC plugin
+  ansible.builtin.get_url:
+    url: "{{ kafka_connect_jdbc_download_url }}"
+    dest: "/tmp/kafka-connect-jdbc-{{ kafka_connect_jdbc_version }}.zip"
+    mode: "0644"
+  environment:
+    "{{ PROXY_ENV }}"
+  when: not kafka_connect_jdbc_installed.stat.exists
+  tags:
+    - plugins
+
+- name: Extract Kafka Connect JDBC plugin
+  ansible.builtin.unarchive:
+    src: "/tmp/kafka-connect-jdbc-{{ kafka_connect_jdbc_version }}.zip"
+    dest: "/tmp"
+    remote_src: true
+  when: not kafka_connect_jdbc_installed.stat.exists
+  tags:
+    - plugins
+
+- name: Install Kafka Connect JDBC libraries
+  ansible.builtin.shell:
+    cmd: >
+      cp -a
+      /tmp/confluentinc-kafka-connect-jdbc-{{ kafka_connect_jdbc_version }}/lib/.
+      {{ kafka_connect_jdbc_plugin_dir }}/
+  when: not kafka_connect_jdbc_installed.stat.exists
+  notify:
+    - Restart Kafka Connect
+  tags:
+    - plugins
+
+- name: Set JDBC plugin ownership
+  ansible.builtin.file:
+    path: "{{ kafka_connect_jdbc_plugin_dir }}"
+    owner: "{{ kafka_connect_user }}"
+    group: "{{ kafka_connect_group }}"
+    recurse: true
+  tags:
+    - plugins
+
+- name: Check installed MySQL Connector/J
+  ansible.builtin.stat:
+    path: "{{ kafka_connect_jdbc_plugin_dir }}/mysql-connector-j-{{ kafka_connect_mysql_driver_version }}.jar"
+  register: kafka_connect_mysql_driver_installed
+  tags:
+    - plugins
+
+- name: Download MySQL Connector/J
+  ansible.builtin.get_url:
+    url: "{{ kafka_connect_mysql_driver_download_url }}"
+    dest: "{{ kafka_connect_jdbc_plugin_dir }}/mysql-connector-j-{{ kafka_connect_mysql_driver_version }}.jar"
+    owner: "{{ kafka_connect_user }}"
+    group: "{{ kafka_connect_group }}"
+    mode: "0644"
+  environment:
+    "{{ PROXY_ENV }}"
+  when: not kafka_connect_mysql_driver_installed.stat.exists
+  notify:
+    - Restart Kafka Connect
+  tags:
+    - plugins
+
+- name: Remove temporary Kafka Connect JDBC archive
+  ansible.builtin.file:
+    path: "/tmp/kafka-connect-jdbc-{{ kafka_connect_jdbc_version }}.zip"
+    state: absent
+  tags:
+    - plugins
+
+- name: Remove temporary extracted Kafka Connect JDBC directory
+  ansible.builtin.file:
+    path: "/tmp/confluentinc-kafka-connect-jdbc-{{ kafka_connect_jdbc_version }}"
+    state: absent
+  tags:
+    - plugins

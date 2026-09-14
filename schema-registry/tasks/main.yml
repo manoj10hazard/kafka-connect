@@ -1,0 +1,25 @@
+---
+- name: PRE INSTALLATION
+  include_tasks: pre-install.yml
+  tags:
+    - pre-install
+
+- name: INSTALL SCHEMA REGISTRY
+  include_tasks: install.yml
+  tags:
+    - install
+
+- name: CONFIGURE SCHEMA REGISTRY
+  include_tasks: configure.yml
+  tags:
+    - configure
+
+- name: CONFIGURE SCHEMA REGISTRY SERVICE
+  include_tasks: service.yml
+  tags:
+    - service
+
+- name: VERIFY SCHEMA REGISTRY
+  include_tasks: verify.yml
+  tags:
+    - verify

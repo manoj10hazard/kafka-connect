@@ -1,0 +1,26 @@
+---
+- name: Deploy Schema Registry systemd service
+  ansible.builtin.template:
+    src: schema-registry.service.j2
+    dest: /etc/systemd/system/schema-registry.service
+    owner: root
+    group: root
+    mode: "0644"
+  notify:
+    - Restart Schema Registry
+  tags:
+    - service
+
+- name: Reload systemd daemon
+  ansible.builtin.systemd:
+    daemon_reload: true
+  tags:
+    - service
+
+- name: Enable and start Schema Registry
+  ansible.builtin.systemd:
+    name: schema-registry
+    enabled: true
+    state: started
+  tags:
+    - service

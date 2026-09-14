@@ -1,0 +1,26 @@
+---
+- name: Deploy Kafka Connect systemd service
+  ansible.builtin.template:
+    src: kafka-connect.service.j2
+    dest: /etc/systemd/system/kafka-connect.service
+    owner: root
+    group: root
+    mode: "0644"
+  notify:
+    - Restart Kafka Connect
+  tags:
+    - service
+
+- name: Reload systemd daemon
+  ansible.builtin.systemd:
+    daemon_reload: true
+  tags:
+    - service
+
+- name: Enable and start Kafka Connect
+  ansible.builtin.systemd:
+    name: kafka-connect
+    enabled: true
+    state: started
+  tags:
+    - service

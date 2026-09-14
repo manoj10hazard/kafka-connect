@@ -1,0 +1,39 @@
+---
+- name: Create Schema Registry group
+  ansible.builtin.group:
+    name: "{{ schema_registry_group }}"
+    state: present
+  tags:
+    - pre-install
+
+- name: Create Schema Registry user
+  ansible.builtin.user:
+    name: "{{ schema_registry_user }}"
+    group: "{{ schema_registry_group }}"
+    system: true
+    shell: /usr/sbin/nologin
+    create_home: false
+    state: present
+  tags:
+    - pre-install
+
+- name: Create Schema Registry installation directory
+  ansible.builtin.file:
+    path: "{{ schema_registry_install_dir }}"
+    state: directory
+    owner: "{{ schema_registry_user }}"
+    group: "{{ schema_registry_group }}"
+    mode: "0755"
+  tags:
+    - pre-install
+
+
+- name: Create Schema Registry data directory
+  ansible.builtin.file:
+    path: "{{ schema_registry_data_dir }}"
+    state: directory
+    owner: "{{ schema_registry_user }}"
+    group: "{{ schema_registry_group }}"
+    mode: "0755"
+  tags:
+    - pre-install

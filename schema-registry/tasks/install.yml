@@ -1,0 +1,71 @@
+---
+- name: Check Schema Registry installation
+  ansible.builtin.stat:
+    path: "{{ schema_registry_install_dir }}/bin/schema-registry-start"
+  register: schema_registry_installed
+  tags:
+    - install
+
+- name: Download Confluent Community archive
+  ansible.builtin.get_url:
+    url: "{{ schema_registry_download_url }}"
+    dest: "{{ schema_registry_archive }}"
+    mode: "0644"
+  environment:
+    "{{ PROXY_ENV }}"
+  when: not schema_registry_installed.stat.exists
+  tags:
+    - install
+
+- name: Extract Confluent Community archive
+  ansible.builtin.unarchive:
+    src: "{{ schema_registry_archive }}"
+    dest: "/tmp"
+    remote_src: true
+  when: not schema_registry_installed.stat.exists
+  tags:
+    - install
+
+- name: Create Schema Registry installation directory
+  ansible.builtin.file:
+    path: "{{ schema_registry_install_dir }}"
+    state: directory
+    owner: "{{ schema_registry_user }}"
+    group: "{{ schema_registry_group }}"
+    mode: "0755"
+  when: not schema_registry_installed.stat.exists
+  tags:
+    - install
+
+- name: Copy Confluent distribution to Schema Registry installation directory
+  ansible.builtin.shell:
+    cmd: >
+      cp -a
+      /tmp/confluent-{{ schema_registry_release }}/.
+      {{ schema_registry_install_dir }}/
+  when: not schema_registry_installed.stat.exists
+  tags:
+    - install
+
+- name: Set Schema Registry installation ownership
+  ansible.builtin.file:
+    path: "{{ schema_registry_install_dir }}"
+    owner: "{{ schema_registry_user }}"
+    group: "{{ schema_registry_group }}"
+    recurse: true
+  tags:
+    - install
+
+- name: Remove temporary Confluent archive
+  ansible.builtin.file:
+    path: "{{ schema_registry_archive }}"
+    state: absent
+  tags:
+    - install
+
+- name: Remove temporary extracted Confluent distribution
+  ansible.builtin.file:
+    path: "/tmp/confluent-{{ schema_registry_release }}"
+    state: absent
+  tags:
+    - install

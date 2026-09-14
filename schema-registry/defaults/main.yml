@@ -1,0 +1,36 @@
+---
+schema_registry_version: "8.3"
+schema_registry_release: "8.3.1"
+schema_registry_download_url: "https://packages.confluent.io/archive/{{ schema_registry_version }}/confluent-community-{{ schema_registry_release }}.tar.gz"
+schema_registry_archive: "/tmp/confluent-community-{{ schema_registry_release }}.tar.gz"
+schema_registry_install_dir: "/opt/schema-registry"
+schema_registry_config_dir: "{{ schema_registry_install_dir }}/etc/schema-registry"
+schema_registry_data_dir: "/var/lib/schema-registry"
+
+schema_registry_user: "schema-registry"
+schema_registry_group: "schema-registry"
+
+schema_registry_rest_port: 8081
+
+schema_registry_host_name: "{{ ansible_host }}"
+
+schema_registry_kafka_bootstrap_servers:
+  - "k8s-lab-m1.wlink.com.np:9092"
+  - "k8s-lab-w1.wlink.com.np:9092"
+  - "k8s-lab-ww.wlink.com.np:9092"
+
+schema_registry_kafka_store_topic: "_schemas"
+
+schema_registry_kafka_store_replication_factor: 3
+
+schema_registry_debug: false
+
+schema_registry_heap_opts: "-Xms256M -Xmx512M"
+
+PROXY_ENV:
+  HTTP_PROXY: "http://http-proxy.wlink.com.np:5178"
+  HTTPS_PROXY: "http://http-proxy.wlink.com.np:5178"
+  http_proxy: "http://http-proxy.wlink.com.np:5178"
+  no_proxy: ".wlink.com.np,localhost"
+  https_proxy: "http://http-proxy.wlink.com.np:5178"
+  NO_PROXY: ".wlink.com.np,localhost"

@@ -1,0 +1,52 @@
+---
+- name: Check Kafka Connect service
+  ansible.builtin.command:
+    cmd: systemctl is-active kafka-connect
+  register: kafka_connect_service_status
+  changed_when: false
+  failed_when: kafka_connect_service_status.rc != 0
+  tags:
+    - verify
+
+- name: Verify Kafka Connect REST API
+  ansible.builtin.uri:
+    url: "http://localhost:{{ kafka_connect_rest_port }}/"
+    method: GET
+    status_code: 200
+    return_content: true
+  register: kafka_connect_rest_response
+  changed_when: false
+  tags:
+    - verify
+
+- name: Display Kafka Connect REST API response
+  ansible.builtin.debug:
+    var: kafka_connect_rest_response.json
+  tags:
+    - verify
+
+- name: Verify Kafka Connect connector plugins API
+  ansible.builtin.uri:
+    url: "http://localhost:{{ kafka_connect_rest_port }}/connector-plugins"
+    method: GET
+    status_code: 200
+    return_content: true
+  register: kafka_connect_plugins_response
+  changed_when: false
+  tags:
+    - verify
+
+- name: Verify Kafka Connect connector plugins are available
+  ansible.builtin.assert:
+    that:
+      - kafka_connect_plugins_response.json | length > 0
+    fail_msg: "No Kafka Connect connector plugins were discovered on {{ inventory_hostname }}"
+    success_msg: "Kafka Connect connector plugins are available on {{ inventory_hostname }}"
+  tags:
+    - verify
+
+- name: Display available Kafka Connect plugins
+  ansible.builtin.debug:
+    msg: "{{ kafka_connect_plugins_response.json }}"
+  tags:
+    - verify

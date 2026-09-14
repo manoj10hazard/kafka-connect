@@ -1,0 +1,34 @@
+# ============================================================
+# Confluent Schema Registry Configuration
+# ============================================================
+
+# ------------------------------------------------------------
+# Schema Registry REST API
+# ------------------------------------------------------------
+
+listeners=http://{{ schema_registry_host_name }}:{{ schema_registry_rest_port }}
+
+host.name={{ schema_registry_host_name }}
+
+# ------------------------------------------------------------
+# Kafka Cluster
+# ------------------------------------------------------------
+
+kafkastore.bootstrap.servers={{ schema_registry_kafka_bootstrap_servers | join(',') }}
+
+kafkastore.topic={{ schema_registry_kafka_store_topic }}
+
+kafkastore.topic.replication.factor={{ schema_registry_kafka_store_replication_factor }}
+
+# ------------------------------------------------------------
+# Compatibility
+# ------------------------------------------------------------
+
+# Default compatibility mode
+compatibility.level=BACKWARD
+
+# ------------------------------------------------------------
+# Debug
+# ------------------------------------------------------------
+
+debug={{ schema_registry_debug }}

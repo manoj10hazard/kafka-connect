@@ -1,0 +1,12 @@
+---
+- name: Deploy Kafka Connect distributed configuration
+  ansible.builtin.template:
+    src: connect-distributed.properties.j2
+    dest: "{{ kafka_connect_config_dir }}/connect-distributed.properties"
+    owner: "{{ kafka_connect_user }}"
+    group: "{{ kafka_connect_group }}"
+    mode: "0644"
+  notify:
+    - Restart Kafka Connect
+  tags:
+    - configure

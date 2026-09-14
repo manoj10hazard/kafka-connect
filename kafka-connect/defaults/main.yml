@@ -1,0 +1,66 @@
+---
+# Kafka Connect
+kafka_connect_version: "4.3.1"
+
+kafka_connect_install_dir: "/opt/kafka"
+kafka_connect_config_dir: "/opt/kafka/config"
+kafka_connect_data_dir: "/var/lib/kafka-connect"
+
+kafka_connect_user: "kafka"
+kafka_connect_group: "kafka"
+
+kafka_connect_rest_port: 8083
+
+# Kafka cluster
+kafka_connect_bootstrap_servers:
+  - "k8s-lab-m1.wlink.com.np:9092"
+  - "k8s-lab-w1.wlink.com.np:9092"
+  - "k8s-lab-ww.wlink.com.np:9092"
+
+# Distributed Connect cluster
+kafka_connect_group_id: "connect-cluster"
+
+kafka_connect_config_storage_topic: "connect-configs"
+kafka_connect_offset_storage_topic: "connect-offsets"
+kafka_connect_status_storage_topic: "connect-status"
+
+kafka_connect_config_storage_replication_factor: 3
+kafka_connect_offset_storage_replication_factor: 3
+kafka_connect_status_storage_replication_factor: 3
+
+kafka_connect_config_storage_partitions: 1
+kafka_connect_offset_storage_partitions: 25
+kafka_connect_status_storage_partitions: 5
+
+kafka_connect_key_converter: "org.apache.kafka.connect.storage.StringConverter"
+kafka_connect_value_converter: "org.apache.kafka.connect.json.JsonConverter"
+
+kafka_connect_key_converter_schemas_enable: false
+kafka_connect_value_converter_schemas_enable: false
+
+kafka_connect_internal_key_converter: "org.apache.kafka.connect.json.JsonConverter"
+kafka_connect_internal_value_converter: "org.apache.kafka.connect.json.JsonConverter"
+
+kafka_connect_plugin_path: "/opt/kafka/connect-plugins"
+
+kafka_connect_heap_opts: "-Xms512M -Xmx1G"
+
+PROXY_ENV:
+  HTTP_PROXY: "http://http-proxy.wlink.com.np:5178"
+  HTTPS_PROXY: "http://http-proxy.wlink.com.np:5178"
+  http_proxy: "http://http-proxy.wlink.com.np:5178"
+  no_proxy: ".wlink.com.np,localhost"
+  https_proxy: "http://http-proxy.wlink.com.np:5178"
+  NO_PROXY: ".wlink.com.np,localhost"
+
+# Kafka Connect JDBC plugin
+
+kafka_connect_jdbc_plugin_dir: "{{ kafka_connect_plugin_path }}/kafka-connect-jdbc"
+
+kafka_connect_jdbc_version: "10.9.6"
+
+kafka_connect_jdbc_download_url: "https://hub-downloads.confluent.io/api/plugins/confluentinc/kafka-connect-jdbc/versions/{{ kafka_connect_jdbc_version }}/confluentinc-kafka-connect-jdbc-{{ kafka_connect_jdbc_version }}.zip"
+# MySQL JDBC driver
+kafka_connect_mysql_driver_version: "9.4.0"
+
+kafka_connect_mysql_driver_download_url: "https://repo1.maven.org/maven2/com/mysql/mysql-connector-j/{{ kafka_connect_mysql_driver_version }}/mysql-connector-j-{{ kafka_connect_mysql_driver_version }}.jar"

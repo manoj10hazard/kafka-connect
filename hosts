@@ -1,0 +1,16 @@
+[kafka_connect]
+kafka-01 ansible_host=10.21.8.236
+kafka-02 ansible_host=10.21.8.237
+kafka-03 ansible_host=10.21.8.238
+
+[schema_registry]
+kafka-01 ansible_host=10.21.8.236
+kafka-02 ansible_host=10.21.8.237
+kafka-03 ansible_host=10.21.8.238
+
+[kafka_platform:children]
+kafka_connect
+schema_registry
+
+[kafka_platform:vars]
+ansible_user=smanoj

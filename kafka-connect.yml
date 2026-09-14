@@ -1,0 +1,6 @@
+---
+- name: Deploy Kafka Connect
+  hosts: kafka_connect
+  become: true
+  roles:
+    - ./kafka-connect

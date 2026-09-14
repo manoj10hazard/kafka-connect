@@ -1,0 +1,23 @@
+[Unit]
+Description=Apache Kafka Connect Distributed
+Documentation=https://kafka.apache.org/documentation/
+After=network-online.target kafka.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+
+User={{ kafka_connect_user }}
+Group={{ kafka_connect_group }}
+
+Environment="KAFKA_HEAP_OPTS={{ kafka_connect_heap_opts }}"
+
+ExecStart=/opt/kafka/bin/connect-distributed.sh {{ kafka_connect_config_dir }}/connect-distributed.properties
+
+Restart=on-failure
+RestartSec=5
+
+LimitNOFILE=100000
+
+[Install]
+WantedBy=multi-user.target

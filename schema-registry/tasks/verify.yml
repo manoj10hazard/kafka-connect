@@ -1,0 +1,43 @@
+---
+- name: Check Schema Registry service
+  ansible.builtin.command:
+    cmd: systemctl is-active schema-registry
+  register: schema_registry_service_status
+  changed_when: false
+  failed_when: schema_registry_service_status.rc != 0
+  tags:
+    - verify
+
+- name: Verify Schema Registry REST API
+  ansible.builtin.uri:
+    url: "http://{{ schema_registry_host_name }}:{{ schema_registry_rest_port }}/"
+    method: GET
+    status_code: 200
+    return_content: true
+  register: schema_registry_rest_response
+  changed_when: false
+  tags:
+    - verify
+
+- name: Display Schema Registry REST API response
+  ansible.builtin.debug:
+    var: schema_registry_rest_response.json
+  tags:
+    - verify
+
+- name: Verify Schema Registry configuration
+  ansible.builtin.stat:
+    path: "{{ schema_registry_config_dir }}/schema-registry.properties"
+  register: schema_registry_config
+  changed_when: false
+  tags:
+    - verify
+
+- name: Verify Schema Registry configuration exists
+  ansible.builtin.assert:
+    that:
+      - schema_registry_config.stat.exists
+    fail_msg: "Schema Registry configuration was not found on {{ inventory_hostname }}"
+    success_msg: "Schema Registry configuration exists on {{ inventory_hostname }}"
+  tags:
+    - verify

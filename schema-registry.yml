@@ -1,0 +1,6 @@
+---
+- name: Deploy Schema Registry
+  hosts: schema_registry
+  become: true
+  roles:
+    - ./schema-registry
