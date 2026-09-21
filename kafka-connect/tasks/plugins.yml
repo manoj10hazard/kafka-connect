@@ -13,8 +13,8 @@
   ansible.builtin.file:
     path: "{{ item }}"
     state: directory
-    owner: kafka
-    group: kafka
+    owner: "{{ kafka_connect_user }}"
+    group: "{{ kafka_connect_group }}"
     mode: "0750"
   loop:
     - "{{ s3_connector_dir }}"
@@ -194,6 +194,9 @@
     - plugins
 
 
+# ============================================================
+# Avro Converter
+# ============================================================
 
 - name: Check Avro converter installation
   ansible.builtin.stat:
@@ -201,6 +204,7 @@
   register: avro_converter_installed
   tags:
     - plugins
+
 
 - name: Copy Schema Registry libraries to Avro converter
   ansible.builtin.shell:
@@ -213,6 +217,7 @@
     - Restart Kafka Connect
   tags:
     - plugins
+
 
 - name: Copy Kafka Connect Avro converter libraries
   ansible.builtin.copy:
@@ -232,6 +237,47 @@
   tags:
     - plugins
 
+
+# ------------------------------------------------------------
+# Check individual Avro dependencies
+# ------------------------------------------------------------
+
+- name: Check Avro common-config dependency
+  ansible.builtin.stat:
+    path: "{{ avro_converter_dir }}/common-config-{{ schema_registry_version }}.jar"
+  register: avro_common_config_installed
+  tags:
+    - plugins
+
+
+- name: Check Avro common-utils dependency
+  ansible.builtin.stat:
+    path: "{{ avro_converter_dir }}/common-utils-{{ schema_registry_version }}.jar"
+  register: avro_common_utils_installed
+  tags:
+    - plugins
+
+
+- name: Check Avro data dependency
+  ansible.builtin.stat:
+    path: "{{ avro_converter_dir }}/kafka-connect-avro-data-{{ schema_registry_version }}.jar"
+  register: avro_data_installed
+  tags:
+    - plugins
+
+
+- name: Check Kafka Schema Converter dependency
+  ansible.builtin.stat:
+    path: "{{ avro_converter_dir }}/kafka-schema-converter-{{ schema_registry_version }}.jar"
+  register: avro_schema_converter_installed
+  tags:
+    - plugins
+
+
+# ------------------------------------------------------------
+# Install only missing dependencies
+# ------------------------------------------------------------
+
 - name: Download Avro common-config dependency
   ansible.builtin.get_url:
     url: "{{ avro_common_config_download_url }}"
@@ -240,7 +286,7 @@
     group: "{{ kafka_connect_group }}"
     mode: "0750"
   environment: "{{ PROXY_ENV }}"
-  when: not avro_converter_installed.stat.exists
+  when: not avro_common_config_installed.stat.exists
   notify:
     - Restart Kafka Connect
   tags:
@@ -255,7 +301,7 @@
     group: "{{ kafka_connect_group }}"
     mode: "0750"
   environment: "{{ PROXY_ENV }}"
-  when: not avro_converter_installed.stat.exists
+  when: not avro_common_utils_installed.stat.exists
   notify:
     - Restart Kafka Connect
   tags:
@@ -270,7 +316,7 @@
     group: "{{ kafka_connect_group }}"
     mode: "0750"
   environment: "{{ PROXY_ENV }}"
-  when: not avro_converter_installed.stat.exists
+  when: not avro_data_installed.stat.exists
   notify:
     - Restart Kafka Connect
   tags:
@@ -285,12 +331,11 @@
     group: "{{ kafka_connect_group }}"
     mode: "0750"
   environment: "{{ PROXY_ENV }}"
-  when: not avro_converter_installed.stat.exists
+  when: not avro_schema_converter_installed.stat.exists
   notify:
     - Restart Kafka Connect
   tags:
     - plugins
-
 
 
 - name: Set Avro converter ownership and permissions
