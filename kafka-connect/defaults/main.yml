@@ -42,7 +42,19 @@ kafka_connect_internal_key_converter: "org.apache.kafka.connect.json.JsonConvert
 kafka_connect_internal_value_converter: "org.apache.kafka.connect.json.JsonConverter"
 
 kafka_connect_plugin_path: "/opt/kafka/connect-plugins"
-
+debezium_version: "3.6.2.Final"
+s3_version: "12.1.4"
+schema_registry_version: "8.3.0"
+schema_registry_lib: "/opt/schema-registry/share/java"
+avro_converter_dir: "{{ kafka_connect_plugins }}/avro-converter"
+s3_connector_dir: "{{ kafka_connect_plugins }}/kafka-connect-s3"
+debezium_dir: "{{ kafka_connect_plugin_path }}/debezium-connector-postgres"
+s3_connector_download_url: "https://hub-downloads.confluent.io/api/plugins/confluentinc/kafka-connect-s3/versions/{{ s3_version }}/confluentinc-kafka-connect-s3-{{ s3_version }}.zip"
+avro_common_config_download_url: "https://packages.confluent.io/maven/io/confluent/common-config/{{ schema_registry_version }}/common-config-{{ schema_registry_version }}.jar"
+avro_common_utils_download_url: "https://packages.confluent.io/maven/io/confluent/common-utils/{{ schema_registry_version }}/common-utils-{{ schema_registry_version }}.jar"
+avro_data_download_url: "https://packages.confluent.io/maven/io/confluent/kafka-connect-avro-data/{{ schema_registry_version }}/kafka-connect-avro-data-{{ schema_registry_version }}.jar"
+avro_common_config_download_url: "https://packages.confluent.io/maven/io/confluent/common-config/{{ schema_registry_version }}/common-config-{{ schema_registry_version }}.jar"
+avro_schema_converter_download_url: "https://packages.confluent.io/maven/io/confluent/kafka-schema-converter/{{ schema_registry_version }}/kafka-schema-converter-{{ schema_registry_version }}.jar"
 kafka_connect_heap_opts: "-Xms512M -Xmx1G"
 
 PROXY_ENV:

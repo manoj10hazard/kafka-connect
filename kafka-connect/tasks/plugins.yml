@@ -9,6 +9,20 @@
   tags:
     - plugins
 
+- name: Create Kafka Connect S3 and  other Avro plugin directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: kafka
+    group: kafka
+    mode: "0750"
+  loop:
+    - "{{ s3_connector_dir }}"
+    - "{{ avro_converter_dir }}"
+  tags:
+    - plugins
+
+
 - name: Check installed Kafka Connect JDBC plugin
   ansible.builtin.stat:
     path: "{{ kafka_connect_jdbc_plugin_dir }}/kafka-connect-jdbc-{{ kafka_connect_jdbc_version }}.jar"
@@ -53,6 +67,7 @@
     path: "{{ kafka_connect_jdbc_plugin_dir }}"
     owner: "{{ kafka_connect_user }}"
     group: "{{ kafka_connect_group }}"
+    mode: "0750"
     recurse: true
   tags:
     - plugins
@@ -76,6 +91,236 @@
   when: not kafka_connect_mysql_driver_installed.stat.exists
   notify:
     - Restart Kafka Connect
+  tags:
+    - plugins
+
+- name: Check installed Debezium PostgreSQL connector
+  ansible.builtin.stat:
+    path: "{{ debezium_dir }}"
+  register: debezium_installed
+  tags:
+    - plugins
+
+- name: Download Debezium PostgreSQL connector
+  ansible.builtin.get_url:
+    url: "https://repo1.maven.org/maven2/io/debezium/debezium-connector-postgres/{{ debezium_version }}/debezium-connector-postgres-{{ debezium_version }}-plugin.tar.gz"
+    dest: "/tmp/debezium-postgres-{{ debezium_version }}-plugin.tar.gz"
+    mode: "0644"
+  environment:
+    "{{ PROXY_ENV }}"
+  when: not debezium_installed.stat.exists
+  tags:
+    - plugins
+
+- name: Extract Debezium PostgreSQL connector
+  ansible.builtin.unarchive:
+    src: "/tmp/debezium-postgres-{{ debezium_version }}-plugin.tar.gz"
+    dest: "{{ kafka_connect_plugin_path }}"
+    remote_src: true
+    owner: "{{ kafka_connect_user }}"
+    group: "{{ kafka_connect_group }}"
+  when: not debezium_installed.stat.exists
+  notify:
+    - Restart Kafka Connect
+  tags:
+    - plugins
+
+- name: Set Debezium PostgreSQL connector ownership and permissions
+  ansible.builtin.file:
+    path: "{{ debezium_dir }}"
+    owner: "{{ kafka_connect_user }}"
+    group: "{{ kafka_connect_group }}"
+    mode: "0750"
+    recurse: true
+  tags:
+    - plugins
+
+- name: Check installed Kafka Connect S3 plugin
+  ansible.builtin.stat:
+    path: "{{ s3_connector_dir }}/kafka-connect-s3-{{ s3_version }}.jar"
+  register: kafka_connect_s3_installed
+  tags:
+    - plugins
+
+- name: Download Kafka Connect S3 connector
+  ansible.builtin.get_url:
+    url: "{{ s3_connector_download_url }}"
+    dest: "/tmp/confluentinc-kafka-connect-s3-{{ s3_version }}.zip"
+    mode: "0644"
+  environment:
+    "{{ PROXY_ENV }}"
+  when: not kafka_connect_s3_installed.stat.exists
+  tags:
+    - plugins
+
+- name: Create temporary S3 connector directory
+  ansible.builtin.file:
+    path: "/tmp/confluentinc-kafka-connect-s3-{{ s3_version }}"
+    state: directory
+    mode: "0755"
+  when: not kafka_connect_s3_installed.stat.exists
+  tags:
+    - plugins
+
+- name: Extract Kafka Connect S3 connector
+  ansible.builtin.unarchive:
+    src: "/tmp/confluentinc-kafka-connect-s3-{{ s3_version }}.zip"
+    dest: "/tmp/confluentinc-kafka-connect-s3-{{ s3_version }}"
+    remote_src: true
+  when: not kafka_connect_s3_installed.stat.exists
+  tags:
+    - plugins
+
+- name: Install Kafka Connect S3 connector libraries
+  ansible.builtin.shell:
+    cmd: >
+      cp -a
+      /tmp/confluentinc-kafka-connect-s3-{{ s3_version }}/lib/.
+      {{ s3_connector_dir }}/
+  when: not kafka_connect_s3_installed.stat.exists
+  notify:
+    - Restart Kafka Connect
+  tags:
+    - plugins
+
+- name: Set S3 connector ownership and permissions
+  ansible.builtin.file:
+    path: "{{ s3_connector_dir }}"
+    owner: "{{ kafka_connect_user }}"
+    group: "{{ kafka_connect_group }}"
+    mode: "0750"
+    recurse: true
+  tags:
+    - plugins
+
+
+
+- name: Check Avro converter installation
+  ansible.builtin.stat:
+    path: "{{ avro_converter_dir }}/kafka-connect-avro-converter-{{ schema_registry_version }}.jar"
+  register: avro_converter_installed
+  tags:
+    - plugins
+
+- name: Copy Schema Registry libraries to Avro converter
+  ansible.builtin.shell:
+    cmd: >
+      cp -a
+      {{ schema_registry_lib }}/schema-registry/.
+      {{ avro_converter_dir }}/
+  when: not avro_converter_installed.stat.exists
+  notify:
+    - Restart Kafka Connect
+  tags:
+    - plugins
+
+- name: Copy Kafka Connect Avro converter libraries
+  ansible.builtin.copy:
+    src: "{{ item }}"
+    dest: "{{ avro_converter_dir }}/"
+    remote_src: true
+    owner: "{{ kafka_connect_user }}"
+    group: "{{ kafka_connect_group }}"
+    mode: "0750"
+  loop:
+    - "{{ schema_registry_lib }}/kafka-serde-tools/kafka-connect-avro-converter-{{ schema_registry_version }}.jar"
+    - "{{ schema_registry_lib }}/kafka-serde-tools/kafka-avro-serializer-{{ schema_registry_version }}.jar"
+    - "{{ schema_registry_lib }}/kafka-serde-tools/kafka-schema-serializer-{{ schema_registry_version }}.jar"
+  when: not avro_converter_installed.stat.exists
+  notify:
+    - Restart Kafka Connect
+  tags:
+    - plugins
+
+- name: Download Avro common-config dependency
+  ansible.builtin.get_url:
+    url: "{{ avro_common_config_download_url }}"
+    dest: "{{ avro_converter_dir }}/common-config-{{ schema_registry_version }}.jar"
+    owner: "{{ kafka_connect_user }}"
+    group: "{{ kafka_connect_group }}"
+    mode: "0750"
+  environment: "{{ PROXY_ENV }}"
+  when: not avro_converter_installed.stat.exists
+  notify:
+    - Restart Kafka Connect
+  tags:
+    - plugins
+
+
+- name: Download Avro common-utils dependency
+  ansible.builtin.get_url:
+    url: "{{ avro_common_utils_download_url }}"
+    dest: "{{ avro_converter_dir }}/common-utils-{{ schema_registry_version }}.jar"
+    owner: "{{ kafka_connect_user }}"
+    group: "{{ kafka_connect_group }}"
+    mode: "0750"
+  environment: "{{ PROXY_ENV }}"
+  when: not avro_converter_installed.stat.exists
+  notify:
+    - Restart Kafka Connect
+  tags:
+    - plugins
+
+
+- name: Download Avro data dependency
+  ansible.builtin.get_url:
+    url: "{{ avro_data_download_url }}"
+    dest: "{{ avro_converter_dir }}/kafka-connect-avro-data-{{ schema_registry_version }}.jar"
+    owner: "{{ kafka_connect_user }}"
+    group: "{{ kafka_connect_group }}"
+    mode: "0750"
+  environment: "{{ PROXY_ENV }}"
+  when: not avro_converter_installed.stat.exists
+  notify:
+    - Restart Kafka Connect
+  tags:
+    - plugins
+
+
+- name: Download Kafka Schema Converter dependency
+  ansible.builtin.get_url:
+    url: "{{ avro_schema_converter_download_url }}"
+    dest: "{{ avro_converter_dir }}/kafka-schema-converter-{{ schema_registry_version }}.jar"
+    owner: "{{ kafka_connect_user }}"
+    group: "{{ kafka_connect_group }}"
+    mode: "0750"
+  environment: "{{ PROXY_ENV }}"
+  when: not avro_converter_installed.stat.exists
+  notify:
+    - Restart Kafka Connect
+  tags:
+    - plugins
+
+
+
+- name: Set Avro converter ownership and permissions
+  ansible.builtin.file:
+    path: "{{ avro_converter_dir }}"
+    owner: "{{ kafka_connect_user }}"
+    group: "{{ kafka_connect_group }}"
+    mode: "0750"
+    recurse: true
+  tags:
+    - plugins
+
+- name: Remove temporary Kafka Connect S3 archive
+  ansible.builtin.file:
+    path: "/tmp/confluentinc-kafka-connect-s3-{{ s3_version }}.zip"
+    state: absent
+  tags:
+    - plugins
+
+- name: Remove temporary S3 connector directory
+  ansible.builtin.file:
+    path: "/tmp/confluentinc-kafka-connect-s3-{{ s3_version }}"
+    state: absent
+  tags:
+    - plugins
+
+- name: Remove temporary Debezium PostgreSQL archive
+  ansible.builtin.file:
+    path: "/tmp/debezium-postgres-{{ debezium_version }}-plugin.tar.gz"
+    state: absent
   tags:
     - plugins
 
