@@ -1,12 +1,12 @@
 [kafka_connect]
-kafka-01 ansible_host=10.21.8.236
-kafka-02 ansible_host=10.21.8.237
-kafka-03 ansible_host=10.21.8.238
+kafka-01 ansible_host=10.21.8.x
+kafka-02 ansible_host=10.21.8.x
+kafka-03 ansible_host=10.21.8.x
 
 [schema_registry]
-kafka-01 ansible_host=10.21.8.236
-kafka-02 ansible_host=10.21.8.237
-kafka-03 ansible_host=10.21.8.238
+kafka-01 ansible_host=10.21.8.x
+kafka-02 ansible_host=10.21.8.x
+kafka-03 ansible_host=10.21.8.x
 
 [kafka_platform:children]
 kafka_connect
